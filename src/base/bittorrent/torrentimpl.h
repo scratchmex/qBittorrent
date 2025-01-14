@@ -185,6 +185,7 @@ namespace BitTorrent
         bool hasError() const override;
         int queuePosition() const override;
         QList<TrackerEntryStatus> trackers() const override;
+        QString trackersStatus() const override;
         QList<QUrl> urlSeeds() const override;
         QString error() const override;
         qlonglong totalDownload() const override;

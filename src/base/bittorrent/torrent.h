@@ -258,6 +258,7 @@ namespace BitTorrent
         virtual bool hasError() const = 0;
         virtual int queuePosition() const = 0;
         virtual QList<TrackerEntryStatus> trackers() const = 0;
+        virtual QString trackersStatus() const = 0;
         virtual QList<QUrl> urlSeeds() const = 0;
         virtual QString error() const = 0;
         virtual qlonglong totalDownload() const = 0;

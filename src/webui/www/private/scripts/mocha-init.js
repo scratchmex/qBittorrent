@@ -999,7 +999,10 @@ const initializeWindows = () => {
     };
 
     deleteTrackerFN = (trackerHost) => {
-        if ((trackerHost === TRACKERS_ALL) || (trackerHost === TRACKERS_TRACKERLESS))
+        if ((trackerHost === TRACKERS_ALL) 
+            || (trackerHost === TRACKERS_TRACKERLESS)
+            || (trackerHost === TRACKERS_ERROR)
+            || (trackerHost === TRACKERS_WARNING))
             return;
 
         const trackerURLs = [...trackerMap.get(trackerHost).keys()].map(encodeURIComponent).join("|");

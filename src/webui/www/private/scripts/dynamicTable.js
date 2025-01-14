@@ -1568,6 +1568,16 @@ window.qBittorrent.DynamicTable ??= (() => {
                         return false;
                     break;
 
+                case TRACKERS_ERROR:
+                    if (row["full_data"].trackers_status !== "error")
+                        return false;
+                    break;
+
+                case TRACKERS_WARNING:
+                    if (row["full_data"].trackers_status !== "warning")
+                        return false;
+                    break;
+
                 default: {
                     const trackerTorrentMap = trackerMap.get(tracker);
                     if (trackerTorrentMap !== undefined) {
