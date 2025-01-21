@@ -629,28 +629,6 @@ QList<TrackerEntryStatus> TorrentImpl::trackers() const
     return m_trackerEntryStatuses;
 }
 
-QString TorrentImpl::trackersStatus() const
-{
-    // TODO: make the returns an enum
-    // TODO: replace logic from trackersfilterwidget.cpp with this
-
-    int count = 0;
-    for (const TrackerEntryStatus &tracker : asConst(trackers()))
-        if ((tracker.state == BitTorrent::TrackerEndpointState::NotWorking)
-            || (tracker.state == BitTorrent::TrackerEndpointState::Unreachable)
-            || (tracker.state == BitTorrent::TrackerEndpointState::TrackerError))
-        {
-            count++;
-        }
-
-    if (count == 0)
-        return u"ok"_s;
-    else if (count == trackers().size())
-        return u"error"_s;
-    else
-        return u"warning"_s;
-}
-
 void TorrentImpl::addTrackers(QList<TrackerEntry> trackers)
 {
     trackers.removeIf([](const TrackerEntry &trackerEntry) { return trackerEntry.url.isEmpty(); });
