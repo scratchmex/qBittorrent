@@ -120,7 +120,7 @@ window.qBittorrent.PropTrackers ??= (() => {
             })
             .finally(() => {
                 clearTimeout(loadTrackersDataTimer);
-                loadTrackersDataTimer = loadTrackersData.delay(10000);
+                loadTrackersDataTimer = loadTrackersData.delay(window.qBittorrent.Client.getSyncMainDataInterval());
             });
     };
 
