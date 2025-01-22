@@ -72,7 +72,6 @@ window.qBittorrent.PropTrackers ??= (() => {
                     return;
 
                 const selectedTrackers = torrentTrackersTable.selectedRowsIds();
-                torrentTrackersTable.clear();
 
                 const trackers = await response.json();
                 if (trackers) {
