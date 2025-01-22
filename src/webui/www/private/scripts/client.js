@@ -669,18 +669,18 @@ window.addEventListener("DOMContentLoaded", () => {
 
         const trackerItemTemplate = document.getElementById("trackerFilterItem");
 
-        const createLink = (host, text, count, type = "default") => {
+        const createLink = (host, text, count) => {
             const trackerFilterItem = trackerItemTemplate.content.cloneNode(true).firstElementChild;
             trackerFilterItem.id = host;
             trackerFilterItem.classList.toggle("selectedFilter", (host === selectedTracker));
 
             const span = trackerFilterItem.firstElementChild;
             span.lastChild.textContent = `${text} (${count})`;
-            if (type == "trackerless")
+            if (host == TRACKERS_TRACKERLESS)
                 span.lastElementChild.src = "images/trackerless.svg";
-            else if (type == "error")
+            else if (host == TRACKERS_ERROR)
                 span.lastElementChild.src = "images/tracker-error.svg";
-            else if (type == "warning")
+            else if (host == TRACKERS_WARNING)
                 span.lastElementChild.src = "images/tracker-warning.svg";
 
             return trackerFilterItem;
@@ -700,9 +700,9 @@ window.addEventListener("DOMContentLoaded", () => {
         }
 
         trackerFilterList.appendChild(createLink(TRACKERS_ALL, "QBT_TR(All)QBT_TR[CONTEXT=TrackerFiltersList]", torrentsTable.getRowSize()));
-        trackerFilterList.appendChild(createLink(TRACKERS_TRACKERLESS, "QBT_TR(Trackerless)QBT_TR[CONTEXT=TrackerFiltersList]", trackerlessTorrentsCount, "trackerless"));
-        trackerFilterList.appendChild(createLink(TRACKERS_ERROR, "Error", trackerTorrentStatusesCount.error, "error"));
-        trackerFilterList.appendChild(createLink(TRACKERS_WARNING, "Warning", trackerTorrentStatusesCount.warning, "warning"));
+        trackerFilterList.appendChild(createLink(TRACKERS_TRACKERLESS, "QBT_TR(Trackerless)QBT_TR[CONTEXT=TrackerFiltersList]", trackerlessTorrentsCount));
+        trackerFilterList.appendChild(createLink(TRACKERS_ERROR, "Error", trackerTorrentStatusesCount.error));
+        trackerFilterList.appendChild(createLink(TRACKERS_WARNING, "Warning", trackerTorrentStatusesCount.warning));
 
         // Sort trackers by hostname
         const sortedList = [];
