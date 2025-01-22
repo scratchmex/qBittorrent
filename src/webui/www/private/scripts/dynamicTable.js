@@ -1569,12 +1569,17 @@ window.qBittorrent.DynamicTable ??= (() => {
                     break;
 
                 case TRACKERS_ERROR:
-                    if (row["full_data"].trackers_status !== "error")
+                    if (!row["full_data"].trackers_statuses.includes("error"))
+                        return false;
+                    break;
+
+                case TRACKERS_OTHER_ERROR:
+                    if (!row["full_data"].trackers_statuses.includes("other_error"))
                         return false;
                     break;
 
                 case TRACKERS_WARNING:
-                    if (row["full_data"].trackers_status !== "warning")
+                    if (!row["full_data"].trackers_statuses.includes("warning"))
                         return false;
                     break;
 

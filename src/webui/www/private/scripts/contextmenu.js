@@ -623,6 +623,7 @@ window.qBittorrent.ContextMenu ??= (() => {
             if ((id !== TRACKERS_ALL) 
                 && (id !== TRACKERS_TRACKERLESS) 
                 && (id !== TRACKERS_ERROR)
+                && (id !== TRACKERS_OTHER_ERROR)
                 && (id !== TRACKERS_WARNING))
                 this.showItem("deleteTracker");
             else
