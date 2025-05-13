@@ -120,7 +120,6 @@ namespace
         );
 
         QList<QString> out;
-        out.reserve(3);
         if (hasWarning)
             out << u"warning"_s;
         if (hasTrackerError)
