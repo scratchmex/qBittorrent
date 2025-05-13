@@ -32,6 +32,8 @@
 #include <QByteArray>
 #include <QHostAddress>
 #include <QList>
+#include <QHash>
+#include <QMap>
 #include <QString>
 
 #include "base/global.h"
