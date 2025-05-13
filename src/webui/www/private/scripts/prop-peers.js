@@ -43,8 +43,10 @@ window.qBittorrent.PropPeers ??= (() => {
     let show_flags = true;
 
     const loadTorrentPeersData = () => {
-        if ($("propPeers").classList.contains("invisible")
-            || $("propertiesPanel_collapseToggle").classList.contains("panel-expand")) {
+        if (document.hidden)
+            return;
+        if (document.getElementById("propPeers").classList.contains("invisible")
+            || document.getElementById("propertiesPanel_collapseToggle").classList.contains("panel-expand")) {
             syncTorrentPeersLastResponseId = 0;
             torrentPeersTable.clear();
             return;
@@ -56,9 +58,11 @@ window.qBittorrent.PropPeers ??= (() => {
             clearTimeout(loadTorrentPeersTimer);
             return;
         }
-        const url = new URI("api/v2/sync/torrentPeers")
-            .setData("rid", syncTorrentPeersLastResponseId)
-            .setData("hash", current_hash);
+        const url = new URL("api/v2/sync/torrentPeers", window.location);
+        url.search = new URLSearchParams({
+            hash: current_hash,
+            rid: syncTorrentPeersLastResponseId,
+        });
         fetch(url, {
                 method: "GET",
                 cache: "no-store"
@@ -69,7 +73,7 @@ window.qBittorrent.PropPeers ??= (() => {
 
                 const responseJSON = await response.json();
 
-                $("error_div").textContent = "";
+                document.getElementById("error_div").textContent = "";
                 if (responseJSON) {
                     const full_update = (responseJSON["full_update"] === true);
                     if (full_update)
@@ -135,7 +139,7 @@ window.qBittorrent.PropPeers ??= (() => {
                     icon: "images/qbittorrent-tray.svg",
                     title: "QBT_TR(Add Peers)QBT_TR[CONTEXT=PeersAdditionDialog]",
                     loadMethod: "iframe",
-                    contentURL: "addpeers.html?hash=" + hash,
+                    contentURL: `addpeers.html?hash=${hash}`,
                     scrollbars: false,
                     resizable: false,
                     maximizable: false,
@@ -185,7 +189,7 @@ window.qBittorrent.PropPeers ??= (() => {
         }
     });
 
-    torrentPeersTable.setup("torrentPeersTableDiv", "torrentPeersTableFixedHeaderDiv", torrentPeersContextMenu);
+    torrentPeersTable.setup("torrentPeersTableDiv", "torrentPeersTableFixedHeaderDiv", torrentPeersContextMenu, true);
 
     return exports();
 })();

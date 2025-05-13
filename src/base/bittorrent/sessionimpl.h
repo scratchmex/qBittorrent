@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2015-2024  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2015-2025  Vladimir Golovnev <glassez@yandex.ru>
  * Copyright (C) 2006  Christophe Dumez <chris@qbittorrent.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #pragma once
 
 #include <chrono>
+#include <functional>
 #include <utility>
 #include <vector>
 
@@ -44,6 +45,7 @@
 #include <QMap>
 #include <QMutex>
 #include <QPointer>
+#include <QQueue>
 #include <QSet>
 #include <QThreadPool>
 
@@ -61,10 +63,15 @@ class QString;
 class QTimer;
 class QUrl;
 
+template <typename T> class QFuture;
+
 class BandwidthScheduler;
 class FileSearcher;
 class FilterParserThread;
+class FreeDiskSpaceChecker;
 class NativeSessionExtension;
+
+struct FileSearchResult;
 
 namespace BitTorrent
 {
@@ -361,6 +368,8 @@ namespace BitTorrent
         void setIncludeOverheadInLimits(bool include) override;
         QString announceIP() const override;
         void setAnnounceIP(const QString &ip) override;
+        int announcePort() const override;
+        void setAnnouncePort(int port) override;
         int maxConcurrentHTTPAnnounces() const override;
         void setMaxConcurrentHTTPAnnounces(int value) override;
         bool isReannounceWhenAddressChangedEnabled() const override;
@@ -388,6 +397,8 @@ namespace BitTorrent
         void setUTPRateLimited(bool limited) override;
         MixedModeAlgorithm utpMixedMode() const override;
         void setUtpMixedMode(MixedModeAlgorithm mode) override;
+        int hostnameCacheTTL() const override;
+        void setHostnameCacheTTL(int value) override;
         bool isIDNSupportEnabled() const override;
         void setIDNSupportEnabled(bool enabled) override;
         bool multiConnectionsPerIpEnabled() const override;
@@ -446,6 +457,8 @@ namespace BitTorrent
         QString lastExternalIPv4Address() const override;
         QString lastExternalIPv6Address() const override;
 
+        qint64 freeDiskSpace() const override;
+
         // Torrent interface
         void handleTorrentResumeDataRequested(const TorrentImpl *torrent);
         void handleTorrentShareLimitChanged(TorrentImpl *torrent);
@@ -471,8 +484,9 @@ namespace BitTorrent
 
         bool addMoveTorrentStorageJob(TorrentImpl *torrent, const Path &newPath, MoveStorageMode mode, MoveStorageContext context);
 
-        void findIncompleteFiles(const TorrentInfo &torrentInfo, const Path &savePath
-                                 , const Path &downloadPath, const PathList &filePaths = {}) const;
+        lt::torrent_handle reloadTorrent(const lt::torrent_handle &currentHandle, lt::add_torrent_params params);
+
+        QFuture<FileSearchResult> findIncompleteFiles(const Path &savePath, const Path &downloadPath, const PathList &filePaths = {}) const;
 
         void enablePortMapping();
         void disablePortMapping();
@@ -507,7 +521,6 @@ namespace BitTorrent
         void generateResumeData();
         void handleIPFilterParsed(int ruleCount);
         void handleIPFilterError();
-        void fileSearchFinished(const TorrentID &id, const Path &savePath, const PathList &fileNames);
         void torrentContentRemovingFinished(const QString &torrentName, const QString &errorMessage);
 
     private:
@@ -597,6 +610,7 @@ namespace BitTorrent
 #endif
 
         TorrentImpl *createTorrent(const lt::torrent_handle &nativeHandle, const LoadTorrentParams &params);
+        TorrentImpl *getTorrent(const lt::torrent_handle &nativeHandle) const;
 
         void saveResumeData();
         void saveTorrentsQueue();
@@ -604,7 +618,7 @@ namespace BitTorrent
 
         void populateAdditionalTrackersFromURL();
 
-        std::vector<lt::alert *> getPendingAlerts(lt::time_duration time = lt::time_duration::zero()) const;
+        void fetchPendingAlerts(lt::time_duration time = lt::time_duration::zero());
 
         void moveTorrentStorage(const MoveStorageJob &job) const;
         void handleMoveTorrentStorageJobFinished(const Path &newPath);
@@ -670,6 +684,7 @@ namespace BitTorrent
         CachedSettingValue<bool> m_ignoreLimitsOnLAN;
         CachedSettingValue<bool> m_includeOverheadInLimits;
         CachedSettingValue<QString> m_announceIP;
+        CachedSettingValue<int> m_announcePort;
         CachedSettingValue<int> m_maxConcurrentHTTPAnnounces;
         CachedSettingValue<bool> m_isReannounceWhenAddressChangedEnabled;
         CachedSettingValue<int> m_stopTrackerTimeout;
@@ -680,6 +695,7 @@ namespace BitTorrent
         CachedSettingValue<BTProtocol> m_btProtocol;
         CachedSettingValue<bool> m_isUTPRateLimited;
         CachedSettingValue<MixedModeAlgorithm> m_utpMixedMode;
+        CachedSettingValue<int> m_hostnameCacheTTL;
         CachedSettingValue<bool> m_IDNSupportEnabled;
         CachedSettingValue<bool> m_multiConnectionsPerIpEnabled;
         CachedSettingValue<bool> m_validateHTTPSTrackerCertificate;
@@ -801,16 +817,19 @@ namespace BitTorrent
         FileSearcher *m_fileSearcher = nullptr;
         TorrentContentRemover *m_torrentContentRemover = nullptr;
 
+        using AddTorrentAlertHandler = std::function<void (const lt::add_torrent_alert *alert)>;
+        QQueue<AddTorrentAlertHandler> m_addTorrentAlertHandlers;
+
         QHash<TorrentID, lt::torrent_handle> m_downloadedMetadata;
 
         QHash<TorrentID, TorrentImpl *> m_torrents;
         QHash<TorrentID, TorrentImpl *> m_hybridTorrentsByAltID;
-        QHash<TorrentID, LoadTorrentParams> m_loadingTorrents;
         QHash<TorrentID, RemovingTorrentData> m_removingTorrents;
         QHash<TorrentID, TorrentID> m_changedTorrentIDs;
         QMap<QString, CategoryOptions> m_categories;
         TagSet m_tags;
 
+        std::vector<lt::alert *> m_alerts;  // make it a class variable so it can preserve its allocated `capacity`
         qsizetype m_receivedAddTorrentAlertsCount = 0;
         QList<Torrent *> m_loadedTorrents;
 
@@ -845,6 +864,10 @@ namespace BitTorrent
         QElapsedTimer m_wakeupCheckTimestamp;
 
         QList<TorrentImpl *> m_pendingFinishedTorrents;
+
+        FreeDiskSpaceChecker *m_freeDiskSpaceChecker = nullptr;
+        QTimer *m_freeDiskSpaceCheckingTimer = nullptr;
+        qint64 m_freeDiskSpace = -1;
 
         friend void Session::initInstance();
         friend void Session::freeInstance();

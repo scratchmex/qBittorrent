@@ -1,6 +1,6 @@
 /*
  * Bittorrent Client using Qt and libtorrent.
- * Copyright (C) 2018-2023  Vladimir Golovnev <glassez@yandex.ru>
+ * Copyright (C) 2018-2025  Vladimir Golovnev <glassez@yandex.ru>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,6 +32,7 @@
 #include <functional>
 
 #include <QBitArray>
+#include <QFuture>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QList>
@@ -117,6 +118,7 @@ const QString KEY_PROP_SSL_PRIVATEKEY = u"ssl_private_key"_s;
 const QString KEY_PROP_SSL_DHPARAMS = u"ssl_dh_params"_s;
 const QString KEY_PROP_HAS_METADATA = u"has_metadata"_s;
 const QString KEY_PROP_PROGRESS = u"progress"_s;
+const QString KEY_PROP_TRACKERS = u"trackers"_s;
 
 
 // File keys
@@ -179,9 +181,11 @@ namespace
     QJsonArray getStickyTrackers(const BitTorrent::Torrent *const torrent)
     {
         int seedsDHT = 0, seedsPeX = 0, seedsLSD = 0, leechesDHT = 0, leechesPeX = 0, leechesLSD = 0;
-        for (const BitTorrent::PeerInfo &peer : asConst(torrent->peers()))
+        const QList<BitTorrent::PeerInfo> peersList = torrent->fetchPeerInfo().takeResult();
+        for (const BitTorrent::PeerInfo &peer : peersList)
         {
-            if (peer.isConnecting()) continue;
+            if (peer.isConnecting())
+                continue;
 
             if (peer.isSeed())
             {
@@ -248,6 +252,31 @@ namespace
         return {dht, pex, lsd};
     }
 
+    QJsonArray getTrackers(const BitTorrent::Torrent *const torrent)
+    {
+        QJsonArray trackerList;
+
+        for (const BitTorrent::TrackerEntryStatus &tracker : asConst(torrent->trackers()))
+        {
+            const bool isNotWorking = (tracker.state == BitTorrent::TrackerEndpointState::NotWorking)
+                    || (tracker.state == BitTorrent::TrackerEndpointState::TrackerError)
+                    || (tracker.state == BitTorrent::TrackerEndpointState::Unreachable);
+            trackerList << QJsonObject
+            {
+                {KEY_TRACKER_URL, tracker.url},
+                {KEY_TRACKER_TIER, tracker.tier},
+                {KEY_TRACKER_STATUS, static_cast<int>((isNotWorking ? BitTorrent::TrackerEndpointState::NotWorking : tracker.state))},
+                {KEY_TRACKER_MSG, tracker.message},
+                {KEY_TRACKER_PEERS_COUNT, tracker.numPeers},
+                {KEY_TRACKER_SEEDS_COUNT, tracker.numSeeds},
+                {KEY_TRACKER_LEECHES_COUNT, tracker.numLeeches},
+                {KEY_TRACKER_DOWNLOADED_COUNT, tracker.numDownloaded}
+            };
+        }
+
+        return trackerList;
+    }
+
     QList<BitTorrent::TorrentID> toTorrentIDs(const QStringList &idStrings)
     {
         QList<BitTorrent::TorrentID> idList;
@@ -304,6 +333,7 @@ void TorrentsController::countAction()
 //   - tag (string): torrent tag for filtering by it (empty string means "untagged"; no "tag" param presented means "any tag")
 //   - hashes (string): filter by hashes, can contain multiple hashes separated by |
 //   - private (bool): filter torrents that are from private trackers (true) or not (false). Empty means any torrent (no filtering)
+//   - includeTrackers (bool): include trackers in list output (true) or not (false). Empty means not included
 //   - sort (string): name of column for sorting by its value
 //   - reverse (bool): enable reverse sorting
 //   - limit (int): set limit number of torrents returned (if greater than 0, otherwise - unlimited)
@@ -319,6 +349,7 @@ void TorrentsController::infoAction()
     int offset {params()[u"offset"_s].toInt()};
     const QStringList hashes {params()[u"hashes"_s].split(u'|', Qt::SkipEmptyParts)};
     const std::optional<bool> isPrivate = parseBool(params()[u"private"_s]);
+    const bool includeTrackers = parseBool(params()[u"includeTrackers"_s]).value_or(false);
 
     std::optional<TorrentIDSet> idSet;
     if (!hashes.isEmpty())
@@ -332,8 +363,15 @@ void TorrentsController::infoAction()
     QVariantList torrentList;
     for (const BitTorrent::Torrent *torrent : asConst(BitTorrent::Session::instance()->torrents()))
     {
-        if (torrentFilter.match(torrent))
-            torrentList.append(serialize(*torrent));
+        if (!torrentFilter.match(torrent))
+            continue;
+
+        QVariantMap serializedTorrent = serialize(*torrent);
+
+        if (includeTrackers)
+            serializedTorrent.insert(KEY_PROP_TRACKERS, getTrackers(torrent));
+
+        torrentList.append(serializedTorrent);
     }
 
     if (torrentList.isEmpty())
@@ -386,8 +424,6 @@ void TorrentsController::infoAction()
     // normalize offset
     if (offset < 0)
         offset = size + offset;
-    if ((offset >= size) || (offset < 0))
-        offset = 0;
     // normalize limit
     if (limit <= 0)
         limit = -1; // unlimited
@@ -487,8 +523,8 @@ void TorrentsController::propertiesAction()
         {KEY_PROP_SEEDS_TOTAL, torrent->totalSeedsCount()},
         {KEY_PROP_PEERS, torrent->leechsCount()},
         {KEY_PROP_PEERS_TOTAL, torrent->totalLeechersCount()},
-        {KEY_PROP_RATIO, ((ratio > BitTorrent::Torrent::MAX_RATIO) ? -1 : ratio)},
-        {KEY_PROP_POPULARITY, ((popularity > BitTorrent::Torrent::MAX_RATIO) ? -1 : popularity)},
+        {KEY_PROP_RATIO, ((ratio >= BitTorrent::Torrent::MAX_RATIO) ? -1 : ratio)},
+        {KEY_PROP_POPULARITY, ((popularity >= BitTorrent::Torrent::MAX_RATIO) ? -1 : popularity)},
         {KEY_PROP_REANNOUNCE, torrent->nextAnnounce()},
         {KEY_PROP_TOTAL_SIZE, torrent->totalSize()},
         {KEY_PROP_PIECES_NUM, torrent->piecesCount()},
@@ -531,27 +567,13 @@ void TorrentsController::trackersAction()
     if (!torrent)
         throw APIError(APIErrorType::NotFound);
 
-    QJsonArray trackerList = getStickyTrackers(torrent);
+    QJsonArray trackersList = getStickyTrackers(torrent);
 
-    for (const BitTorrent::TrackerEntryStatus &tracker : asConst(torrent->trackers()))
-    {
-        const bool isNotWorking = (tracker.state == BitTorrent::TrackerEndpointState::NotWorking)
-                || (tracker.state == BitTorrent::TrackerEndpointState::TrackerError)
-                || (tracker.state == BitTorrent::TrackerEndpointState::Unreachable);
-        trackerList << QJsonObject
-        {
-            {KEY_TRACKER_URL, tracker.url},
-            {KEY_TRACKER_TIER, tracker.tier},
-            {KEY_TRACKER_STATUS, static_cast<int>((isNotWorking ? BitTorrent::TrackerEndpointState::NotWorking : tracker.state))},
-            {KEY_TRACKER_MSG, tracker.message},
-            {KEY_TRACKER_PEERS_COUNT, tracker.numPeers},
-            {KEY_TRACKER_SEEDS_COUNT, tracker.numSeeds},
-            {KEY_TRACKER_LEECHES_COUNT, tracker.numLeeches},
-            {KEY_TRACKER_DOWNLOADED_COUNT, tracker.numDownloaded}
-        };
-    }
+    // merge QJsonArray
+    for (const auto &tracker : asConst(getTrackers(torrent)))
+        trackersList.append(tracker);
 
-    setResult(trackerList);
+    setResult(trackersList);
 }
 
 // Returns the web seeds for a torrent in JSON format.
@@ -708,7 +730,7 @@ void TorrentsController::filesAction()
     {
         const QList<BitTorrent::DownloadPriority> priorities = torrent->filePriorities();
         const QList<qreal> fp = torrent->filesProgress();
-        const QList<qreal> fileAvailability = torrent->availableFileFractions();
+        const QList<qreal> fileAvailability = torrent->fetchAvailableFileFractions().takeResult();
         const BitTorrent::TorrentInfo info = torrent->info();
         for (const int index : asConst(fileIndexes))
         {
@@ -777,7 +799,7 @@ void TorrentsController::pieceStatesAction()
     for (int i = 0; i < states.size(); ++i)
         pieceStates.append(static_cast<int>(states[i]) * 2);
 
-    const QBitArray dlstates = torrent->downloadingPieces();
+    const QBitArray dlstates = torrent->fetchDownloadingPieces().takeResult();
     for (int i = 0; i < states.size(); ++i)
     {
         if (dlstates[i])
@@ -1473,6 +1495,27 @@ void TorrentsController::addTagsAction()
             torrent->addTag(Tag(tagStr));
         });
     }
+}
+
+void TorrentsController::setTagsAction()
+{
+    requireParams({u"hashes"_s, u"tags"_s});
+
+    const QStringList hashes {params()[u"hashes"_s].split(u'|', Qt::SkipEmptyParts)};
+    const QStringList tags {params()[u"tags"_s].split(u',', Qt::SkipEmptyParts)};
+
+    const TagSet newTags {tags.begin(), tags.end()};
+    applyToTorrents(hashes, [&newTags](BitTorrent::Torrent *const torrent)
+    {
+        TagSet tmpTags {newTags};
+        for (const Tag &tag : asConst(torrent->tags()))
+        {
+            if (tmpTags.erase(tag) == 0)
+                torrent->removeTag(tag);
+        }
+        for (const Tag &tag : tmpTags)
+            torrent->addTag(tag);
+    });
 }
 
 void TorrentsController::removeTagsAction()

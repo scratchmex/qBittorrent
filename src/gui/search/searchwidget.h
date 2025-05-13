@@ -31,12 +31,15 @@
 #pragma once
 
 #include <QPointer>
+#include <QSet>
 #include <QWidget>
 
+#include "base/utils/thread.h"
 #include "gui/guiapplicationcomponent.h"
 
 class QEvent;
 class QObject;
+class QStringListModel;
 
 class SearchJobWidget;
 
@@ -62,11 +65,14 @@ signals:
 private:
     bool eventFilter(QObject *object, QEvent *event) override;
 
+    void onPreferencesChanged();
+
     void pluginsButtonClicked();
     void searchButtonClicked();
     void stopButtonClicked();
+    void searchTextEdited(const QString &text);
+    void currentTabChanged(int index);
 
-    void tabChanged(int index);
     void tabStatusChanged(SearchJobWidget *tab);
 
     void closeTab(int index);
@@ -76,16 +82,38 @@ private:
 
     void selectMultipleBox(int index);
     void toggleFocusBetweenLineEdits();
+    void adjustSearchButton();
 
     void fillCatCombobox();
     void fillPluginComboBox();
     void selectActivePage();
-    void searchTextEdited(const QString &);
 
     QString selectedCategory() const;
     QStringList selectedPlugins() const;
 
+    QString generateTabID() const;
+    int addTab(const QString &tabID, SearchJobWidget *searchJobWdget);
+
+    void loadHistory();
+    void restoreSession();
+    void updateHistory(const QString &newSearchPattern);
+    void saveSession() const;
+
+    void createSearchPatternCompleter();
+
     Ui::SearchWidget *m_ui = nullptr;
     QPointer<SearchJobWidget> m_currentSearchTab; // Selected tab
     bool m_isNewQueryString = false;
+    QHash<QString, SearchJobWidget *> m_tabWidgets;
+
+    bool m_storeOpenedTabs = false;
+    bool m_storeOpenedTabsResults = false;
+    int m_historyLength = 0;
+
+    Utils::Thread::UniquePtr m_ioThread;
+
+    class DataStorage;
+    DataStorage *m_dataStorage = nullptr;
+
+    QStringListModel *m_searchPatternCompleterModel = nullptr;
 };
