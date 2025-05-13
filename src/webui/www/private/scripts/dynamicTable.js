@@ -1691,7 +1691,7 @@ window.qBittorrent.DynamicTable ??= (() => {
             switch (trackerHost) {
                 case TRACKERS_ALL:
                     break; // do nothing
-                    
+
                 case TRACKERS_TRACKERLESS:
                     if (row["full_data"].trackers_count > 0)
                         return false;
