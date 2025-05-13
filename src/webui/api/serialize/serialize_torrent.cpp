@@ -111,7 +111,7 @@ namespace
             }
         );
 
-        const bool hasError = std::any_of(
+        const bool hasAnnounceError = std::any_of(
             tstatuses.begin(), tstatuses.end(),
             [](const BitTorrent::TrackerEntryStatus &tstatus) {
                 return (tstatus.state == BitTorrent::TrackerEndpointState::NotWorking)
@@ -124,8 +124,8 @@ namespace
             out << u"warning"_s;
         if (hasTrackerError)
             out << u"error"_s;
-        if (hasError)
-            out << u"other_error"_s;
+        if (hasAnnounceError)
+            out << u"announce_error"_s;
 
         return out;
     }

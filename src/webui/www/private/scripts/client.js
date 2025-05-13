@@ -163,7 +163,7 @@ let setTagFilter = () => {};
 const TRACKERS_ALL = "b4af0e4c-e76d-4bac-a392-46cbc18d9655";
 const TRACKERS_TRACKERLESS = "e24bd469-ea22-404c-8e2e-a17c82f37ea0";
 const TRACKERS_ERROR = "UUID-TRACKERS_ERROR";
-const TRACKERS_OTHER_ERROR = "UUID-TRACKERS_OTHER_ERROR";
+const TRACKERS_ANNOUNCE_ERROR = "UUID-TRACKERS_ANNOUNCE_ERROR";
 const TRACKERS_WARNING = "UUID-TRACKERS_WARNING";
 
 // Map<trackerHost: String, Map<trackerURL: String, torrents: Set>>
@@ -687,7 +687,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
             span.lastChild.textContent = `${text} (${count})`;
             if (host == TRACKERS_TRACKERLESS)
                 span.lastElementChild.src = "images/trackerless.svg";
-            else if (host == TRACKERS_ERROR || host == TRACKERS_OTHER_ERROR)
+            else if (host == TRACKERS_ERROR || host == TRACKERS_ANNOUNCE_ERROR)
                 span.lastElementChild.src = "images/tracker-error.svg";
             else if (host == TRACKERS_WARNING)
                 span.lastElementChild.src = "images/tracker-warning.svg";
@@ -699,7 +699,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         let trackerTorrentStatusesCount = {
             warning: 0,
             error: 0,
-            other_error: 0,
+            announce_error: 0,
         };
         for (const { full_data: { trackers_count: trackersCount, trackers_statuses: trackersStatuses } } of torrentsTable.getRowValues()) {
             if (trackersCount === 0)
@@ -712,7 +712,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         trackerFilterList.appendChild(createLink(TRACKERS_ALL, "QBT_TR(All)QBT_TR[CONTEXT=TrackerFiltersList]", torrentsTable.getRowSize()));
         trackerFilterList.appendChild(createLink(TRACKERS_TRACKERLESS, "QBT_TR(Trackerless)QBT_TR[CONTEXT=TrackerFiltersList]", trackerlessTorrentsCount));
         trackerFilterList.appendChild(createLink(TRACKERS_ERROR, "Tracker error", trackerTorrentStatusesCount.error));
-        trackerFilterList.appendChild(createLink(TRACKERS_OTHER_ERROR, "Other error", trackerTorrentStatusesCount.other_error));
+        trackerFilterList.appendChild(createLink(TRACKERS_ANNOUNCE_ERROR, "Other error", trackerTorrentStatusesCount.announce_error));
         trackerFilterList.appendChild(createLink(TRACKERS_WARNING, "Warning", trackerTorrentStatusesCount.warning));
 
         // Sort trackers by hostname
