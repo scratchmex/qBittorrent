@@ -712,7 +712,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
         trackerFilterList.appendChild(createLink(TRACKERS_ALL, "QBT_TR(All)QBT_TR[CONTEXT=TrackerFiltersList]", torrentsTable.getRowSize()));
         trackerFilterList.appendChild(createLink(TRACKERS_TRACKERLESS, "QBT_TR(Trackerless)QBT_TR[CONTEXT=TrackerFiltersList]", trackerlessTorrentsCount));
         trackerFilterList.appendChild(createLink(TRACKERS_ERROR, "Tracker error", trackerTorrentStatusesCount.error));
-        trackerFilterList.appendChild(createLink(TRACKERS_ANNOUNCE_ERROR, "Other error", trackerTorrentStatusesCount.announce_error));
+        trackerFilterList.appendChild(createLink(TRACKERS_ANNOUNCE_ERROR, "Announce error", trackerTorrentStatusesCount.announce_error));
         trackerFilterList.appendChild(createLink(TRACKERS_WARNING, "Warning", trackerTorrentStatusesCount.warning));
 
         // Sort trackers by hostname
