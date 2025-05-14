@@ -1687,7 +1687,18 @@ window.qBittorrent.DynamicTable ??= (() => {
                 }
             }
 
-            const _trackerStatuses = trackerStatusMap[row["full_data"].rowId];
+            // we have state in these 2 attributes: trackers_statuses, trackers_statuses_removed
+            // we could do "trackers_statuses - trackers_statuses_removed" but the it won't work right away
+            // because in the case where we remove and then add the same item it will stay in _removed 
+            // but it shouldn't be removed because we just added it again.
+            // to circumvent that, we are going to update trackers_statuses with the differences and wipe the _removed
+            const _trackers_statuses_removed = row["full_data"]["trackers_statuses_removed"];
+            if(_trackers_statuses_removed && _trackers_statuses_removed.length > 0) {
+                const _trackerStatusesUpdated = new Set(row["full_data"]["trackers_statuses"]).difference(new Set(_trackers_statuses_removed));
+                row["full_data"]["trackers_statuses"] = Array.from(_trackerStatusesUpdated);
+                _trackers_statuses_removed.length = 0;
+            }
+            const _trackers_statuses = row["full_data"]["trackers_statuses"];
             switch (trackerHost) {
                 case TRACKERS_ALL:
                     break; // do nothing
@@ -1698,17 +1709,17 @@ window.qBittorrent.DynamicTable ??= (() => {
                     break;
                     
                 case TRACKERS_ERROR:
-                    if (!_trackerStatuses.?has("error"))
+                    if (!_trackers_statuses.includes("error"))
                         return false;
                     break;
 
                 case TRACKERS_ANNOUNCE_ERROR:
-                    if (!_trackerStatuses.?has("announce_error"))
+                    if (!_trackers_statuses.includes("announce_error"))
                         return false;
                     break;
 
                 case TRACKERS_WARNING:
-                    if (!_trackerStatuses.?has("warning"))
+                    if (!_trackers_statuses.includes("warning"))
                         return false;
                     break;
 

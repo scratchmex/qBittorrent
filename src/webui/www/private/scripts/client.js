@@ -165,8 +165,6 @@ const TRACKERS_TRACKERLESS = "e24bd469-ea22-404c-8e2e-a17c82f37ea0";
 const TRACKERS_ERROR = "UUID-TRACKERS_ERROR";
 const TRACKERS_ANNOUNCE_ERROR = "UUID-TRACKERS_ANNOUNCE_ERROR";
 const TRACKERS_WARNING = "UUID-TRACKERS_WARNING";
-// Map<torrentHash: String, statuses: Set<String>>
-const trackerStatusMap = new Map();
 
 // Map<trackerHost: String, Map<trackerURL: String, torrents: Set>>
 const trackerMap = new Map();
@@ -704,15 +702,12 @@ window.addEventListener("DOMContentLoaded", (event) => {
             announce_error: 0,
         };
         for (const torrentRow of torrentsTable.getRowValues()) {
-            const { full_data: { trackers_count: trackersCount, hash: hash } } = torrentRow;
-            const trackersStatuses = trackerStatusMap[hash];
+            const { full_data: { trackers_count: trackersCount, trackers_statuses: trackersStatuses } } = torrentRow;
             if (trackersCount === 0)
                 trackerlessTorrentsCount += 1;
 
-            if(trackersStatuses) {
-                for(const status of trackersStatuses)
-                    trackerTorrentStatusesCount[status] += 1;
-            }
+            for(const status of trackersStatuses)
+                trackerTorrentStatusesCount[status] += 1;
         }
 
         trackerFilterList.appendChild(createLink(TRACKERS_ALL, "QBT_TR(All)QBT_TR[CONTEXT=TrackerFiltersList]", torrentsTable.getRowSize()));
@@ -900,18 +895,6 @@ window.addEventListener("DOMContentLoaded", (event) => {
                                     responseJSON["torrents"][key]["_statusOrder"] = statusSortOrder[state];
                                     updateStatuses = true;
                                 }
-                                const _trackerStatuses = responseJSON["torrents"][key]["trackers_statuses"];
-                                if (_trackerStatuses) {
-                                    if(!trackerStatusMap.has(key)) {
-                                        trackerStatusMap[key] = new Set();
-                                    }
-                                    _trackerStatuses.forEach(it => trackerStatusMap[key].add(it));
-                                }
-                                const _trackerStatusesRemoved = responseJSON["torrents"][key]["trackers_statuses_removed"];
-                                if (_trackerStatusesRemoved) {
-                                    _trackerStatusesRemoved.forEach(it => trackerStatusMap[key].delete(it));
-                                }
-                                
                                 torrentsTable.updateRowData(responseJSON["torrents"][key]);
                                 if (addTorrentToCategoryList(responseJSON["torrents"][key]))
                                     updateCategories = true;
