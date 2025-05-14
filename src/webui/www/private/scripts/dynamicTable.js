@@ -1687,7 +1687,7 @@ window.qBittorrent.DynamicTable ??= (() => {
                 }
             }
 
-            const { trackers_statuses } = row["full_data"];
+            const _trackerStatuses = trackerStatusMap[row["full_data"].rowId];
             switch (trackerHost) {
                 case TRACKERS_ALL:
                     break; // do nothing
@@ -1698,17 +1698,17 @@ window.qBittorrent.DynamicTable ??= (() => {
                     break;
                     
                 case TRACKERS_ERROR:
-                    if (!trackers_statuses.includes("error"))
+                    if (!_trackerStatuses.?has("error"))
                         return false;
                     break;
 
                 case TRACKERS_ANNOUNCE_ERROR:
-                    if (!trackers_statuses.includes("announce_error"))
+                    if (!_trackerStatuses.?has("announce_error"))
                         return false;
                     break;
 
                 case TRACKERS_WARNING:
-                    if (!trackers_statuses.includes("warning"))
+                    if (!_trackerStatuses.?has("warning"))
                         return false;
                     break;
 
