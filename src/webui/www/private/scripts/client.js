@@ -133,7 +133,7 @@ let updatePropertiesPanel = () => {};
 this.updateMainData = () => {};
 let alternativeSpeedLimits = false;
 let queueing_enabled = true;
-let serverSyncMainDataInterval = 5000;
+let serverSyncMainDataInterval = 1500;
 let customSyncMainDataInterval = null;
 let useSubcategories = true;
 const useAutoHideZeroStatusFilters = LocalPreferences.get("hide_zero_status_filters", "false") === "true";
