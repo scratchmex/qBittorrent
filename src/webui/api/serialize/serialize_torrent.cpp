@@ -30,6 +30,8 @@
 
 #include <QDateTime>
 #include <QList>
+#include <QDebug>
+
 
 #include "base/bittorrent/infohash.h"
 #include "base/bittorrent/torrent.h"
@@ -86,13 +88,27 @@ namespace
         }
     }
 
-    QList<QString> getTrackerStatuses(const QList<BitTorrent::TrackerEntryStatus> tstatuses)
-    {
-        // NOTE: keep logic from trackersfilterwidget.cpp in sync with this
-        // TODO: ^^ make an indirection to avoid duplicate logic
-        // TODO: make the returns an enum
-
-        const bool hasWarning = std::any_of(
+    // NOTE: keep logic from trackersfilterwidget.cpp in sync with these methods
+    // TODO: ^^ make an indirection to avoid duplicate logic
+    bool torrentHasTrackerError(const QList<BitTorrent::TrackerEntryStatus> tstatuses) {
+        return std::any_of(
+            tstatuses.begin(), tstatuses.end(),
+            [](const BitTorrent::TrackerEntryStatus &tstatus) {
+                return tstatus.state == BitTorrent::TrackerEndpointState::TrackerError;
+            }
+        );
+    }
+    bool torrentHasAnnounceError(const QList<BitTorrent::TrackerEntryStatus> tstatuses) {
+        return std::any_of(
+            tstatuses.begin(), tstatuses.end(),
+            [](const BitTorrent::TrackerEntryStatus &tstatus) {
+                return (tstatus.state == BitTorrent::TrackerEndpointState::NotWorking)
+                        || (tstatus.state == BitTorrent::TrackerEndpointState::Unreachable);
+            }
+        );
+    }
+    bool torrentHasWarning(const QList<BitTorrent::TrackerEntryStatus> tstatuses) {
+        return std::any_of(
             tstatuses.begin(), tstatuses.end(),
             [](const BitTorrent::TrackerEntryStatus &tstatus) {
                 return std::any_of(
@@ -103,31 +119,6 @@ namespace
                 );
             }
         );
-
-        const bool hasTrackerError = std::any_of(
-            tstatuses.begin(), tstatuses.end(),
-            [](const BitTorrent::TrackerEntryStatus &tstatus) {
-                return tstatus.state == BitTorrent::TrackerEndpointState::TrackerError;
-            }
-        );
-
-        const bool hasAnnounceError = std::any_of(
-            tstatuses.begin(), tstatuses.end(),
-            [](const BitTorrent::TrackerEntryStatus &tstatus) {
-                return (tstatus.state == BitTorrent::TrackerEndpointState::NotWorking)
-                        || (tstatus.state == BitTorrent::TrackerEndpointState::Unreachable);
-            }
-        );
-
-        QList<QString> out;
-        if (hasWarning)
-            out << u"warning"_s;
-        if (hasTrackerError)
-            out << u"error"_s;
-        if (hasAnnounceError)
-            out << u"announce_error"_s;
-
-        return out;
     }
 }
 
@@ -184,7 +175,9 @@ QVariantMap serialize(const BitTorrent::Torrent &torrent)
         {KEY_TORRENT_COMPLETION_ON, Utils::DateTime::toSecsSinceEpoch(torrent.completedTime())},
         {KEY_TORRENT_TRACKER, torrent.currentTracker()},
         {KEY_TORRENT_TRACKERS_COUNT, torrent.trackers().size()},
-        {KEY_TORRENT_TRACKERS_STATUSES, getTrackerStatuses(torrent.trackers())},
+        {KEY_TORRENT_HAS_TRACKER_ERROR, torrentHasTrackerError(torrent.trackers())},
+        {KEY_TORRENT_HAS_ANNOUNCE_ERROR, torrentHasAnnounceError(torrent.trackers())},
+        {KEY_TORRENT_HAS_TRACKER_WARNING, torrentHasWarning(torrent.trackers())},
         {KEY_TORRENT_DL_LIMIT, torrent.downloadLimit()},
         {KEY_TORRENT_UP_LIMIT, torrent.uploadLimit()},
         {KEY_TORRENT_AMOUNT_DOWNLOADED, torrent.totalDownload()},
