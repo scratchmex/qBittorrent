@@ -685,11 +685,11 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
             const span = trackerFilterItem.firstElementChild;
             span.lastChild.textContent = `${text} (${count})`;
-            if (host == TRACKERS_TRACKERLESS)
+            if (host === TRACKERS_TRACKERLESS)
                 span.lastElementChild.src = "images/trackerless.svg";
-            else if (host == TRACKERS_ERROR || host == TRACKERS_ANNOUNCE_ERROR)
+            else if ((host === TRACKERS_ERROR) || (host === TRACKERS_ANNOUNCE_ERROR))
                 span.lastElementChild.src = "images/tracker-error.svg";
-            else if (host == TRACKERS_WARNING)
+            else if (host === TRACKERS_WARNING)
                 span.lastElementChild.src = "images/tracker-warning.svg";
 
             return trackerFilterItem;
