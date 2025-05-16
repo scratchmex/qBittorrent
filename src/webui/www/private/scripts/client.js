@@ -699,22 +699,14 @@ window.addEventListener("DOMContentLoaded", (event) => {
         let has_tracker_error_count = 0;
         let has_announce_error_count = 0;
         let has_tracker_warning_count = 0;
-        for (const torrentRow of torrentsTable.getRowValues()) {
-            const { 
-                full_data: { 
-                    trackers_count,
-                    has_tracker_error,
-                    has_announce_error,
-                    has_tracker_warning 
-                }
-            } = torrentRow;
-            if (trackers_count === 0)
+        for (const { full_data } of torrentsTable.getRowValues()) {
+            if (full_data.trackers_count === 0)
                 trackerless_count += 1;
 
             // counting bools by adding them
-            has_tracker_error_count += has_tracker_error;
-            has_announce_error_count += has_announce_error;
-            has_tracker_warning_count += has_tracker_warning;
+            has_tracker_error_count += full_data.has_tracker_error;
+            has_announce_error_count += full_data.has_announce_error;
+            has_tracker_warning_count += full_data.has_tracker_warning;
         }
 
         trackerFilterList.appendChild(createLink(TRACKERS_ALL, "QBT_TR(All)QBT_TR[CONTEXT=TrackerFiltersList]", torrentsTable.getRowSize()));
