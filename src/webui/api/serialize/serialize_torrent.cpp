@@ -31,7 +31,6 @@
 #include <QDateTime>
 #include <QList>
 
-
 #include "base/bittorrent/infohash.h"
 #include "base/bittorrent/torrent.h"
 #include "base/bittorrent/trackerentrystatus.h"
