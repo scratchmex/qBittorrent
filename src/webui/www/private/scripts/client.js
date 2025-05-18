@@ -689,12 +689,12 @@ window.addEventListener("DOMContentLoaded", (event) => {
             span.lastChild.textContent = `${text} (${count})`;
 
             switch(host) {
+                case TRACKERS_ANNOUNCE_ERROR:
+                case TRACKERS_ERROR:
+                    span.lastElementChild.src = "images/tracker-error.svg";
+                    break;
                 case TRACKERS_TRACKERLESS:
                     span.lastElementChild.src = "images/trackerless.svg";
-                    break;
-                case TRACKERS_ERROR:
-                case TRACKERS_ANNOUNCE_ERROR:
-                    span.lastElementChild.src = "images/tracker-error.svg";
                     break;
                 case TRACKERS_WARNING:
                     span.lastElementChild.src = "images/tracker-warning.svg";
