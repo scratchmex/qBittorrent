@@ -30,7 +30,6 @@
 
 #include <QDateTime>
 #include <QList>
-#include <QDebug>
 
 
 #include "base/bittorrent/infohash.h"
@@ -88,33 +87,36 @@ namespace
         }
     }
 
-    // NOTE: keep logic from trackersfilterwidget.cpp in sync with these methods
-    // TODO: ^^ make an indirection to avoid duplicate logic
-    bool torrentHasTrackerError(const QList<BitTorrent::TrackerEntryStatus> tstatuses) {
+    // analog GUI code is in trackersfilterwidget.cpp
+    bool torrentHasTrackerError(const QList<BitTorrent::TrackerEntryStatus> statuses)
+    {
         return std::any_of(
-            tstatuses.begin(), tstatuses.end(),
-            [](const BitTorrent::TrackerEntryStatus &tstatus) {
-                return tstatus.state == BitTorrent::TrackerEndpointState::TrackerError;
+            statuses.begin(), statuses.end(),
+            [](const BitTorrent::TrackerEntryStatus &status) {
+                return status.state == BitTorrent::TrackerEndpointState::TrackerError;
             }
         );
     }
-    bool torrentHasAnnounceError(const QList<BitTorrent::TrackerEntryStatus> tstatuses) {
+    bool torrentHasAnnounceError(const QList<BitTorrent::TrackerEntryStatus> statuses)
+    {
         return std::any_of(
-            tstatuses.begin(), tstatuses.end(),
-            [](const BitTorrent::TrackerEntryStatus &tstatus) {
-                return (tstatus.state == BitTorrent::TrackerEndpointState::NotWorking)
-                        || (tstatus.state == BitTorrent::TrackerEndpointState::Unreachable);
+            statuses.begin(), statuses.end(),
+            [](const BitTorrent::TrackerEntryStatus &status) {
+                return (status.state == BitTorrent::TrackerEndpointState::NotWorking)
+                        || (status.state == BitTorrent::TrackerEndpointState::Unreachable);
             }
         );
     }
-    bool torrentHasWarning(const QList<BitTorrent::TrackerEntryStatus> tstatuses) {
+    bool torrentHasWarning(const QList<BitTorrent::TrackerEntryStatus> statuses)
+    {
         return std::any_of(
-            tstatuses.begin(), tstatuses.end(),
-            [](const BitTorrent::TrackerEntryStatus &tstatus) {
+            statuses.begin(), statuses.end(),
+            [](const BitTorrent::TrackerEntryStatus &status) {
                 return std::any_of(
-                    tstatus.endpoints.cbegin(), tstatus.endpoints.cend(), 
+                    status.endpoints.cbegin(), status.endpoints.cend(), 
                     [](const BitTorrent::TrackerEndpointStatus &endpointEntry) {
-                        return !endpointEntry.message.isEmpty() && endpointEntry.state == BitTorrent::TrackerEndpointState::Working;
+                        return !endpointEntry.message.isEmpty() 
+                                && (endpointEntry.state == BitTorrent::TrackerEndpointState::Working);
                     }
                 );
             }

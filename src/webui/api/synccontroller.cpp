@@ -203,7 +203,6 @@ namespace
                 }
                 break;
             case QMetaType::QVariantList:
-            case QMetaType::QStringList:
                 {
                     const auto [list, removedItems] = processList(prevData[key].toList(), value.toList());
                     if (!list.isEmpty())
