@@ -77,7 +77,6 @@ window.qBittorrent.PropTrackers ??= (() => {
 
                 const trackers = await response.json();
                 if (trackers) {
-                    // we can't take diffs here. we just take the source as truth every time
                     torrentTrackersTable.clear();
 
                     trackers.each((tracker) => {

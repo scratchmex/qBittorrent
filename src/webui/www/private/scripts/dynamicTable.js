@@ -1691,18 +1691,18 @@ window.qBittorrent.DynamicTable ??= (() => {
                 case TRACKERS_ALL:
                     break; // do nothing
 
-                case TRACKERS_TRACKERLESS:
-                    if (row["full_data"].trackers_count > 0)
+                case TRACKERS_ANNOUNCE_ERROR:
+                    if (!row["full_data"]["has_announce_error"])
                         return false;
                     break;
-                    
+
                 case TRACKERS_ERROR:
                     if (!row["full_data"]["has_tracker_error"])
                         return false;
                     break;
 
-                case TRACKERS_ANNOUNCE_ERROR:
-                    if (!row["full_data"]["has_announce_error"])
+                case TRACKERS_TRACKERLESS:
+                    if (row["full_data"].trackers_count > 0)
                         return false;
                     break;
 

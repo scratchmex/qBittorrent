@@ -161,10 +161,10 @@ let setTagFilter = () => {};
 
 /* Trackers filter */
 const TRACKERS_ALL = "b4af0e4c-e76d-4bac-a392-46cbc18d9655";
+const TRACKERS_ANNOUNCE_ERROR = "d0b4cad2-9f6f-4e7f-8d4b-f80a103dd436";
+const TRACKERS_ERROR = "b551cfc3-64e9-4393-bc88-5d6ea2fab5cc";
 const TRACKERS_TRACKERLESS = "e24bd469-ea22-404c-8e2e-a17c82f37ea0";
-const TRACKERS_ERROR = "UUID-TRACKERS_ERROR";
-const TRACKERS_ANNOUNCE_ERROR = "UUID-TRACKERS_ANNOUNCE_ERROR";
-const TRACKERS_WARNING = "UUID-TRACKERS_WARNING";
+const TRACKERS_WARNING = "82a702c5-210c-412b-829f-97632d7557e9";
 
 // Map<trackerHost: String, Map<trackerURL: String, torrents: Set>>
 const trackerMap = new Map();
@@ -687,12 +687,19 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
             const span = trackerFilterItem.firstElementChild;
             span.lastChild.textContent = `${text} (${count})`;
-            if (host === TRACKERS_TRACKERLESS)
-                span.lastElementChild.src = "images/trackerless.svg";
-            else if ((host === TRACKERS_ERROR) || (host === TRACKERS_ANNOUNCE_ERROR))
-                span.lastElementChild.src = "images/tracker-error.svg";
-            else if (host === TRACKERS_WARNING)
-                span.lastElementChild.src = "images/tracker-warning.svg";
+
+            switch(host) {
+                case TRACKERS_TRACKERLESS:
+                    span.lastElementChild.src = "images/trackerless.svg";
+                    break;
+                case TRACKERS_ERROR:
+                case TRACKERS_ANNOUNCE_ERROR:
+                    span.lastElementChild.src = "images/tracker-error.svg";
+                    break;
+                case TRACKERS_WARNING:
+                    span.lastElementChild.src = "images/tracker-warning.svg";
+                    break;
+            }
 
             return trackerFilterItem;
         };
@@ -713,9 +720,9 @@ window.addEventListener("DOMContentLoaded", (event) => {
 
         trackerFilterList.appendChild(createLink(TRACKERS_ALL, "QBT_TR(All)QBT_TR[CONTEXT=TrackerFiltersList]", torrentsTable.getRowSize()));
         trackerFilterList.appendChild(createLink(TRACKERS_TRACKERLESS, "QBT_TR(Trackerless)QBT_TR[CONTEXT=TrackerFiltersList]", trackerless_count));
-        trackerFilterList.appendChild(createLink(TRACKERS_ERROR, "Tracker error", has_tracker_error_count));
-        trackerFilterList.appendChild(createLink(TRACKERS_ANNOUNCE_ERROR, "Announce error", has_announce_error_count));
-        trackerFilterList.appendChild(createLink(TRACKERS_WARNING, "Warning", has_tracker_warning_count));
+        trackerFilterList.appendChild(createLink(TRACKERS_ERROR, "QBT_TR(Tracker error)QBT_TR[CONTEXT=TrackerFiltersList]", has_tracker_error_count));
+        trackerFilterList.appendChild(createLink(TRACKERS_ANNOUNCE_ERROR, "QBT_TR(Announce error)QBT_TR[CONTEXT=TrackerFiltersList]", has_announce_error_count));
+        trackerFilterList.appendChild(createLink(TRACKERS_WARNING, "QBT_TR(Warning)QBT_TR[CONTEXT=TrackerFiltersList]", has_tracker_warning_count));
 
         // Sort trackers by hostname
         const sortedList = [];
