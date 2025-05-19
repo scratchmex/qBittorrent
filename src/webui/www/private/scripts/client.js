@@ -704,25 +704,25 @@ window.addEventListener("DOMContentLoaded", (event) => {
             return trackerFilterItem;
         };
 
-        let trackerless_count = 0;
-        let has_tracker_error_count = 0;
-        let has_announce_error_count = 0;
-        let has_tracker_warning_count = 0;
+        let trackerlessCount = 0;
+        let trackerErrorCount = 0;
+        let announceErrorCount = 0;
+        let trackerWarningCount = 0;
         for (const { full_data } of torrentsTable.getRowValues()) {
             if (full_data.trackers_count === 0)
-                trackerless_count += 1;
+                trackerlessCount += 1;
 
             // counting bools by adding them
-            has_tracker_error_count += full_data.has_tracker_error;
-            has_announce_error_count += full_data.has_announce_error;
-            has_tracker_warning_count += full_data.has_tracker_warning;
+            trackerErrorCount += full_data.has_tracker_error;
+            announceErrorCount += full_data.has_announce_error;
+            trackerWarningCount += full_data.has_tracker_warning;
         }
 
         trackerFilterList.appendChild(createLink(TRACKERS_ALL, "QBT_TR(All)QBT_TR[CONTEXT=TrackerFiltersList]", torrentsTable.getRowSize()));
-        trackerFilterList.appendChild(createLink(TRACKERS_TRACKERLESS, "QBT_TR(Trackerless)QBT_TR[CONTEXT=TrackerFiltersList]", trackerless_count));
-        trackerFilterList.appendChild(createLink(TRACKERS_ERROR, "QBT_TR(Tracker error)QBT_TR[CONTEXT=TrackerFiltersList]", has_tracker_error_count));
-        trackerFilterList.appendChild(createLink(TRACKERS_ANNOUNCE_ERROR, "QBT_TR(Announce error)QBT_TR[CONTEXT=TrackerFiltersList]", has_announce_error_count));
-        trackerFilterList.appendChild(createLink(TRACKERS_WARNING, "QBT_TR(Warning)QBT_TR[CONTEXT=TrackerFiltersList]", has_tracker_warning_count));
+        trackerFilterList.appendChild(createLink(TRACKERS_TRACKERLESS, "QBT_TR(Trackerless)QBT_TR[CONTEXT=TrackerFiltersList]", trackerlessCount));
+        trackerFilterList.appendChild(createLink(TRACKERS_ERROR, "QBT_TR(Tracker error)QBT_TR[CONTEXT=TrackerFiltersList]", trackerErrorCount));
+        trackerFilterList.appendChild(createLink(TRACKERS_ANNOUNCE_ERROR, "QBT_TR(Announce error)QBT_TR[CONTEXT=TrackerFiltersList]", announceErrorCount));
+        trackerFilterList.appendChild(createLink(TRACKERS_WARNING, "QBT_TR(Warning)QBT_TR[CONTEXT=TrackerFiltersList]", trackerWarningCount));
 
         // Sort trackers by hostname
         const sortedList = [];
