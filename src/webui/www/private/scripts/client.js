@@ -688,7 +688,7 @@ window.addEventListener("DOMContentLoaded", (event) => {
             const span = trackerFilterItem.firstElementChild;
             span.lastChild.textContent = `${text} (${count})`;
 
-            switch(host) {
+            switch (host) {
                 case TRACKERS_ANNOUNCE_ERROR:
                 case TRACKERS_ERROR:
                     span.lastElementChild.src = "images/tracker-error.svg";

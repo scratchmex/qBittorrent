@@ -620,7 +620,7 @@ window.qBittorrent.ContextMenu ??= (() => {
 
     class TrackersFilterContextMenu extends FilterListContextMenu {
         updateMenuItems() {
-            switch(this.options.element.id) {
+            switch (this.options.element.id) {
                 case TRACKERS_ALL:
                 case TRACKERS_ANNOUNCE_ERROR:
                 case TRACKERS_ERROR:
